@@ -30,4 +30,9 @@
 *.exe
 *.out
 *.app
+
+# Output files
+build/*
+external/*
+wxWidgets*
 network_info
