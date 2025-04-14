@@ -92,7 +92,6 @@ The project includes a `Makefile` for building on Linux and cross-compiling for 
 - **wxWidgets**: For the GUI framework (version 3.2 or later).
 - **Linux**:
   - Standard networking headers (`<ifaddrs.h>`, `<linux/if_arp.h>`, etc.).
-  - `libresolv` for IP address formatting.
 - **Windows**:
   - Winsock (`ws2_32`) and IP Helper (`iphlpapi`) libraries.
 
