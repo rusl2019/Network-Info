@@ -31,23 +31,11 @@ A cross-platform GUI application built with wxWidgets to display network interfa
    cd Network-Info
    ```
 
-2. Ensure wxWidgets is installed:
-   - **Linux**:
-     ```bash
-     sudo apt-get install libwxgtk3.0-gtk3-dev
-     ```
-   - **Windows (cross-compilation)**:
-     Build wxWidgets for Windows using MinGW-w64:
-     ```bash
-     wget https://github.com/wxWidgets/wxWidgets/releases/download/v3.2.5/wxWidgets-3.2.5.tar.bz2
-     tar -xjf wxWidgets-3.2.5.tar.bz2
-     cd wxWidgets-3.2.5
-     mkdir build-win
-     cd build-win
-     ../configure --host=x86_64-w64-mingw32 --build=x86_64-linux-gnu --disable-shared --enable-unicode
-     make -j$(nproc)
-     sudo make install
-     ```
+2. Ensure wxWidgets is compilled:
+   Build wxWidgets for Linux and Windows using `tools/build_wxwidgets.sh`:
+   ```bash
+   ./tools/build_wxwidgets.sh
+   ```
 
 ## Building
 The project includes a `Makefile` for building on Linux and cross-compiling for Windows.
