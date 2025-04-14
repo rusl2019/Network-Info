@@ -16,6 +16,13 @@
 #include <ws2tcpip.h>
 #endif
 
+enum
+{
+    ID_Refresh = wxID_HIGHEST + 1,
+    ID_Exit,
+    ID_About
+};
+
 std::string MacToString(unsigned char *mac, size_t length)
 {
     if (!mac || length < 6)
@@ -136,10 +143,34 @@ class NetworkFrame : public wxFrame
 public:
     NetworkFrame() : wxFrame(nullptr, wxID_ANY, "Network Information", wxPoint(50, 50), wxSize(700, 550))
     {
+        CreateStatusBar();
+        SetStatusText("[INFO] Ready");
+
+        LogInfo("Application started");
+
+        wxMenuBar *menuBar = new wxMenuBar();
+
+        wxMenu *fileMenu = new wxMenu();
+        fileMenu->Append(ID_Refresh, "&Refresh\tF5", "Refresh network information");
+        fileMenu->AppendSeparator();
+        fileMenu->Append(ID_Exit, "E&xit\tAlt-X", "Exit the application");
+        menuBar->Append(fileMenu, "&File");
+
+        wxMenu *helpMenu = new wxMenu();
+        helpMenu->Append(ID_About, "&About\tF1", "About this application");
+        menuBar->Append(helpMenu, "&Help");
+
+        SetMenuBar(menuBar);
+
         wxPanel *panel = new wxPanel(this, wxID_ANY);
         wxButton *refreshButton = new wxButton(panel, wxID_ANY, "Refresh", wxPoint(10, 10), wxSize(100, 30));
         listBox = new wxListBox(panel, wxID_ANY, wxPoint(10, 50), wxSize(660, 450), 0, nullptr, wxLB_HSCROLL);
+
         refreshButton->Bind(wxEVT_BUTTON, &NetworkFrame::OnRefresh, this);
+        Bind(wxEVT_MENU, &NetworkFrame::OnRefresh, this, ID_Refresh);
+        Bind(wxEVT_MENU, &NetworkFrame::OnExit, this, ID_Exit);
+        Bind(wxEVT_MENU, &NetworkFrame::OnAbout, this, ID_About);
+
         UpdateNetworkInfo();
         SetMinSize(wxSize(700, 550));
     }
@@ -147,23 +178,63 @@ public:
 private:
     wxListBox *listBox;
 
+    void LogInfo(const wxString &message)
+    {
+        SetStatusText(wxString::Format("[INFO] %s", message));
+    }
+
+    void LogError(const wxString &message)
+    {
+        SetStatusText(wxString::Format("[ERROR] %s", message));
+    }
+
     void UpdateNetworkInfo()
     {
         listBox->Clear();
         std::vector<wxString> info = GetNetworkInfo();
+        if (info.empty())
+        {
+            LogError("Failed to retrieve network information");
+            return;
+        }
         for (const auto &line : info)
         {
             listBox->Append(line);
         }
+        LogInfo("Network information updated");
     }
 
     void OnRefresh(wxCommandEvent &event)
     {
+        LogInfo("Refresh initiated");
         UpdateNetworkInfo();
     }
+
+    void OnExit(wxCommandEvent &event)
+    {
+        LogInfo("Exit requested");
+        Close(true);
+    }
+
+    void OnAbout(wxCommandEvent &event)
+    {
+        LogInfo("About dialog opened");
+        wxMessageBox("Network Information Viewer\nVersion 1.1.0\n\nA cross-platform application to display network interface information.\nBuilt with wxWidgets\n\n(c) 2025 Muhammad Ruslan",
+                     "About Network Information",
+                     wxOK | wxICON_INFORMATION, this);
+        LogInfo("About dialog closed");
+    }
+
+    wxDECLARE_EVENT_TABLE();
 };
 
-class NetworkApp : public wxApp
+wxBEGIN_EVENT_TABLE(NetworkFrame, wxFrame)
+    EVT_MENU(ID_Refresh, NetworkFrame::OnRefresh)
+        EVT_MENU(ID_Exit, NetworkFrame::OnExit)
+            EVT_MENU(ID_About, NetworkFrame::OnAbout)
+                wxEND_EVENT_TABLE()
+
+                    class NetworkApp : public wxApp
 {
 public:
     bool OnInit() override
