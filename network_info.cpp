@@ -1,4 +1,5 @@
 #include <wx/wx.h>
+#include <wx/clipbrd.h>
 #include <string>
 #include <vector>
 
@@ -20,7 +21,8 @@ enum
 {
     ID_Refresh = wxID_HIGHEST + 1,
     ID_Exit,
-    ID_About
+    ID_About,
+    ID_CopyToClipboard
 };
 
 std::string MacToString(unsigned char *mac, size_t length)
@@ -152,6 +154,7 @@ public:
 
         wxMenu *fileMenu = new wxMenu();
         fileMenu->Append(ID_Refresh, "&Refresh\tF5", "Refresh network information");
+        fileMenu->Append(ID_CopyToClipboard, "&Copy to Clipboard\tCtrl+C", "Copy network information to clipboard");
         fileMenu->AppendSeparator();
         fileMenu->Append(ID_Exit, "E&xit\tAlt-X", "Exit the application");
         menuBar->Append(fileMenu, "&File");
@@ -164,10 +167,13 @@ public:
 
         wxPanel *panel = new wxPanel(this, wxID_ANY);
         wxButton *refreshButton = new wxButton(panel, wxID_ANY, "Refresh", wxPoint(10, 10), wxSize(100, 30));
+        wxButton *copyButton = new wxButton(panel, wxID_ANY, "Copy to Clipboard", wxPoint(120, 10), wxSize(150, 30));
         listBox = new wxListBox(panel, wxID_ANY, wxPoint(10, 50), wxSize(660, 450), 0, nullptr, wxLB_HSCROLL);
 
         refreshButton->Bind(wxEVT_BUTTON, &NetworkFrame::OnRefresh, this);
+        copyButton->Bind(wxEVT_BUTTON, &NetworkFrame::OnCopyToClipboard, this);
         Bind(wxEVT_MENU, &NetworkFrame::OnRefresh, this, ID_Refresh);
+        Bind(wxEVT_MENU, &NetworkFrame::OnCopyToClipboard, this, ID_CopyToClipboard);
         Bind(wxEVT_MENU, &NetworkFrame::OnExit, this, ID_Exit);
         Bind(wxEVT_MENU, &NetworkFrame::OnAbout, this, ID_About);
 
@@ -210,6 +216,26 @@ private:
         UpdateNetworkInfo();
     }
 
+    void OnCopyToClipboard(wxCommandEvent &event)
+    {
+        wxString clipboardText;
+        for (unsigned int i = 0; i < listBox->GetCount(); i++)
+        {
+            clipboardText += listBox->GetString(i) + "\n";
+        }
+
+        if (wxTheClipboard->Open())
+        {
+            wxTheClipboard->SetData(new wxTextDataObject(clipboardText));
+            wxTheClipboard->Close();
+            LogInfo("Network information copied to clipboard");
+        }
+        else
+        {
+            LogError("Failed to access clipboard");
+        }
+    }
+
     void OnExit(wxCommandEvent &event)
     {
         LogInfo("Exit requested");
@@ -219,7 +245,7 @@ private:
     void OnAbout(wxCommandEvent &event)
     {
         LogInfo("About dialog opened");
-        wxMessageBox("Network Information Viewer\nVersion 1.1.0\n\nA cross-platform application to display network interface information.\nBuilt with wxWidgets\n\n(c) 2025 Muhammad Ruslan",
+        wxMessageBox("Network Information Viewer\nVersion 1.2.0\n\nA cross-platform application to display network interface information.\nBuilt with wxWidgets\n\n(c) 2025 Muhammad Ruslan",
                      "About Network Information",
                      wxOK | wxICON_INFORMATION, this);
         LogInfo("About dialog closed");
@@ -229,20 +255,21 @@ private:
 };
 
 wxBEGIN_EVENT_TABLE(NetworkFrame, wxFrame)
-    EVT_MENU(ID_Refresh, NetworkFrame::OnRefresh)
-        EVT_MENU(ID_Exit, NetworkFrame::OnExit)
-            EVT_MENU(ID_About, NetworkFrame::OnAbout)
-                wxEND_EVENT_TABLE()
+EVT_MENU(ID_Refresh, NetworkFrame::OnRefresh)
+EVT_MENU(ID_CopyToClipboard, NetworkFrame::OnCopyToClipboard)
+EVT_MENU(ID_Exit, NetworkFrame::OnExit)
+EVT_MENU(ID_About, NetworkFrame::OnAbout)
+wxEND_EVENT_TABLE()
 
-                    class NetworkApp : public wxApp
+class NetworkApp : public wxApp
 {
-public:
-    bool OnInit() override
-    {
-        NetworkFrame *frame = new NetworkFrame();
-        frame->Show(true);
-        return true;
-    }
+	public:
+	    bool OnInit() override
+	    {
+		NetworkFrame *frame = new NetworkFrame();
+		frame->Show(true);
+		return true;
+	    }
 };
 
 wxIMPLEMENT_APP(NetworkApp);
